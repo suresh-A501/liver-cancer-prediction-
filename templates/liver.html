@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthAI - Intelligent Liver Diagnostics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Modern Medical Color Palette */
+            --primary: #0284c7;        /* Vibrant Blue */
+            --primary-dark: #0369a1;   /* Deep Blue */
+            --secondary: #0ea5e9;      /* Sky Blue */
+            --accent: #38bdf8;         /* Light Blue Accent */
+            --surface: #ffffff;        /* White Surface */
+            --background: #f0f9ff;     /* Very Light Blue BG */
+            --text-main: #0f172a;      /* Dark Slate */
+            --text-muted: #64748b;     /* Muted Slate */
+            --success: #10b981;        /* Emerald */
+            --danger: #ef4444;         /* Red */
+            --card-shadow: 0 10px 30px -10px rgba(2, 132, 199, 0.15);
+            --gradient-main: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- Header --- */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 5%;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .logo span { color: var(--text-main); }
+
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 600; transition: 0.3s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        
+        .auth-buttons { display: flex; gap: 15px; align-items: center; }
+        .auth-btn-login { text-decoration: none; color: var(--primary); font-weight: 600; }
+        .auth-btn-signup { background: var(--gradient-main); color: white; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: transform 0.2s; }
+        .auth-btn-signup:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(2, 132, 199, 0.3); }
+
+        .container { max-width: 1280px; margin: 0 auto; padding: 40px 20px; flex: 1; }
+
+        /* --- Alerts (Flash Messages) --- */
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 10px; text-align: center; font-weight: 500; }
+        .alert-error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-info { background-color: #e0f2fe; color: #075985; }
+
+        /* --- Page Sections (Controlled by Jinja) --- */
+        .page-section { display: none; animation: fadeSlideUp 0.6s ease; }
+        .active-section { display: block; }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Common Styles --- */
+        .hero-section { display: grid; grid-template-columns: 1.2fr 1fr; gap: 60px; align-items: center; margin-bottom: 60px; }
+        .hero-content h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 24px; background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+        .hero-image img { width: 100%; border-radius: 30px; box-shadow: var(--card-shadow); }
+
+        .auth-container { max-width: 450px; margin: 40px auto; background: white; padding: 40px; border-radius: 24px; box-shadow: var(--card-shadow); text-align: center; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main); }
+        .input-group input, .input-group select { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; }
+        .input-group input:focus { border-color: var(--primary); outline: none; }
+        
+        .cta-btn { background: var(--gradient-main); color: white; padding: 14px; width: 100%; border: none; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.3s; }
+        .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.4); }
+
+        /* Google Button Style */
+        .google-btn {
+            background: white; 
+            color: #374151; 
+            border: 1px solid #e5e7eb; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .google-btn:hover { background-color: #f9fafb; border-color: #d1d5db; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .divider { display: flex; align-items: center; color: var(--text-muted); font-size: 0.85rem; margin: 20px 0; }
+        .divider::before, .divider::after { content: ""; flex: 1; border-bottom: 1px solid #e5e7eb; }
+        .divider::before { margin-right: 10px; }
+        .divider::after { margin-left: 10px; }
+
+        /* Diagnosis Form Specifics */
+        .diagnosis-interface { background: white; border-radius: 30px; padding: 40px; box-shadow: var(--card-shadow); }
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .result-box { padding: 20px; border-radius: 15px; margin-bottom: 30px; text-align: center; font-weight: bold; font-size: 1.2rem; }
+        
+        /* Services Grid */
+        .services-grid-large { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+        .service-card-lg { background: white; border-radius: 24px; overflow: hidden; box-shadow: var(--card-shadow); transition: transform 0.3s; display: flex; flex-direction: column; }
+        .service-card-lg:hover { transform: translateY(-10px); }
+        /* Added bg color to ensure visibility if image fails */
+        .service-img { height: 200px; width: 100%; object-fit: cover; background-color: #e2e8f0; } 
+        .service-body { padding: 30px; flex: 1; }
+
+        /* About Section */
+        .about-split { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; margin-bottom: 80px; }
+        .about-img img { width: 100%; border-radius: 30px; box-shadow: var(--card-shadow); }
+        .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; margin-top: 50px; }
+        .team-card { text-align: center; }
+        .team-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 4px solid white; box-shadow: var(--card-shadow); }
+
+        /* Contact Section */
+        .contact-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; background: white; border-radius: 30px; overflow: hidden; box-shadow: var(--card-shadow); }
+        .contact-info { background: #0f172a; color: white; padding: 50px; }
+        .contact-form-area { padding: 50px; }
+        .contact-details-item { margin-bottom: 30px; display: flex; gap: 15px; }
+
+        /* Footer */
+        footer { background: white; padding: 40px 0; margin-top: auto; border-top: 1px solid #e2e8f0; text-align: center; color: var(--text-muted); }
+
+        /* Mobile */
+        @media (max-width: 968px) {
+            .hero-section, .diagnosis-interface, .about-split, .contact-layout, .form-grid, .team-grid { grid-template-columns: 1fr; }
+            .hero-image, .about-img { display: none; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="/" class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="#0284c7"></path></svg>
+            Health<span>AI</span>
+        </a>
+        
+        <nav class="nav-links">
+            <a href="/" class="{{ 'active' if page == 'home' else '' }}">Home</a>
+            <a href="/services" class="{{ 'active' if page == 'services' else '' }}">Services</a>
+            <a href="/about" class="{{ 'active' if page == 'about' else '' }}">About</a>
+            <a href="/contact" class="{{ 'active' if page == 'contact' else '' }}">Contact</a>
+        </nav>
+
+        <div class="auth-buttons">
+            {% if user %}
+                <span style="font-weight: 600; color: var(--text-main);">Hi, {{ user }}</span>
+                <a href="/diagnosis" class="auth-btn-signup">Dashboard</a>
+                <a href="/logout" style="color: var(--danger); text-decoration: none; font-weight: 600; font-size: 0.9rem;">Logout</a>
+            {% else %}
+                <a href="/login" class="auth-btn-login">Log In</a>
+                <a href="/signup" class="auth-btn-signup">Sign Up</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- Flash Messages Area -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- ================= HOME PAGE ================= -->
+        <div class="page-section {{ 'active-section' if page == 'home' else '' }}">
+            <div class="hero-section">
+                <div class="hero-content">
+                    <h1>Advanced AI for <br>Liver Health.</h1>
+                    <p>Early detection saves lives. Our Random Forest machine learning model analyzes 10+ clinical biomarkers to provide instant health risk assessments.</p>
+                    <div style="display: flex; gap: 15px;">
+                        {% if user %}
+                            <a href="/diagnosis" class="cta-btn" style="text-decoration: none; width: auto;">Go to Dashboard →</a>
+                        {% else %}
+                            <a href="/login" class="cta-btn" style="text-decoration: none; width: auto;">Start Diagnosis →</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80" alt="Medical Tech" onerror="this.style.display='none'">
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 50px;">
+                <h2>How It Works</h2>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 30px;">
+                    <div style="background: white; padding: 30px; border-radius: 20px; box-shadow: var(--card-shadow);">
+                        <h3>1. Register</h3>
+                        <p style="color: var(--text-muted);">Create a secure account to access the tool.</p>
+                    </div>
+                    <div style="background: white; padding: 30px; border-radius: 20px; box-shadow: var(--card-shadow);">
+                        <h3>2. Enter Data</h3>
+                        <p style="color: var(--text-muted);">Input your Liver Function Test (LFT) values.</p>
+                    </div>
+                    <div style="background: white; padding: 30px; border-radius: 20px; box-shadow: var(--card-shadow);">
+                        <h3>3. Get Results</h3>
+                        <p style="color: var(--text-muted);">Receive an instant AI-powered risk assessment.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= LOGIN PAGE ================= -->
+        <div class="page-section {{ 'active-section' if page == 'login' else '' }}">
+            <div class="auth-container">
+                <h2 style="margin-bottom: 10px;">Welcome Back</h2>
+                <p style="color: var(--text-muted); margin-bottom: 30px;">Access your patient dashboard</p>
+                
+                <!-- Google Login Button -->
+                <a href="/login/google" class="cta-btn google-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    Continue with Google
+                </a>
+
+                <div class="divider">or login with email</div>
+
+                <form action="/login" method="POST">
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" name="email" placeholder="name@example.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" name="password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="cta-btn">Sign In</button>
+                </form>
+
+                <div style="margin-top: 20px; font-size: 0.9rem;">
+                    Don't have an account? <a href="/signup" style="color: var(--primary); text-decoration: none; font-weight: 600;">Create Account</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SIGNUP PAGE ================= -->
+        <div class="page-section {{ 'active-section' if page == 'signup' else '' }}">
+            <div class="auth-container">
+                <h2 style="margin-bottom: 10px;">Create Account</h2>
+                <p style="color: var(--text-muted); margin-bottom: 30px;">Start your health journey</p>
+                
+                <!-- Google Signup Button -->
+                <a href="/login/google" class="cta-btn google-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    Sign up with Google
+                </a>
+
+                <div class="divider">or register with email</div>
+
+                <form action="/signup" method="POST">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" name="name" placeholder="John Doe" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" name="email" placeholder="name@example.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" name="password" placeholder="Create a password" required>
+                    </div>
+                    <button type="submit" class="cta-btn">Create Account</button>
+                </form>
+
+                <div style="margin-top: 20px; font-size: 0.9rem;">
+                    Already have an account? <a href="/login" style="color: var(--primary); text-decoration: none; font-weight: 600;">Log In</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= DIAGNOSIS / DASHBOARD ================= -->
+        <div class="page-section {{ 'active-section' if page == 'diagnosis' else '' }}">
+            <div style="text-align: center; margin-bottom: 40px;">
+                <h2>Diagnostic Dashboard</h2>
+                <p style="color: var(--text-muted);">Securely analyze your clinical data</p>
+            </div>
+
+            <div class="diagnosis-interface">
+                {% if prediction_text %}
+                    <div class="result-box" style="background-color: {{ '#fee2e2' if prediction_color == 'danger' else '#d1fae5' }}; color: {{ '#991b1b' if prediction_color == 'danger' else '#065f46' }};">
+                        {{ prediction_text }}
+                    </div>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <a href="/diagnosis" style="color: var(--primary); font-weight: 600;">Test Another Patient</a>
+                    </div>
+                {% else %}
+                    <form action="/predict" method="POST" onsubmit="showLoading()">
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label>Age</label>
+                                <input type="number" name="Age" placeholder="e.g. 45" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Gender</label>
+                                <select name="Gender" required>
+                                    <option value="1">Male</option>
+                                    <option value="0">Female</option>
+                                </select>
+                            </div>
+                            <div class="input-group"><label>Total Bilirubin</label><input type="number" step="0.1" name="Total_Bilirubin" required></div>
+                            <div class="input-group"><label>Direct Bilirubin</label><input type="number" step="0.1" name="Direct_Bilirubin" required></div>
+                            <div class="input-group"><label>Alk. Phosphotase</label><input type="number" name="Alkaline_Phosphotase" required></div>
+                            <div class="input-group"><label>Alamine Amino.</label><input type="number" name="Alamine_Aminotransferase" required></div>
+                            <div class="input-group"><label>Aspartate Amino.</label><input type="number" name="Aspartate_Aminotransferase" required></div>
+                            <div class="input-group"><label>Total Proteins</label><input type="number" step="0.1" name="Total_Protiens" required></div>
+                            <div class="input-group"><label>Albumin</label><input type="number" step="0.1" name="Albumin" required></div>
+                            <div class="input-group"><label>A/G Ratio</label><input type="number" step="0.01" name="Albumin_and_Globulin_Ratio" required></div>
+                        </div>
+                        <button type="submit" id="submitBtn" class="cta-btn" style="margin-top: 30px;">Generate Analysis</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- ================= SERVICES PAGE (Restored Images) ================= -->
+        <div class="page-section {{ 'active-section' if page == 'services' else '' }}">
+             <div style="text-align: center; margin-bottom: 50px;">
+                <h2>Comprehensive <span>Healthcare Solutions</span></h2>
+                <p>Beyond simple diagnostics, we offer a full suite of technological tools.</p>
+            </div>
+            <div class="services-grid-large">
+                <div class="service-card-lg">
+                    <!-- Updated with robust Unsplash ID and onerror fallback -->
+                    <img src="https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=600&q=80" 
+                         class="service-img" alt="AI Analysis" 
+                         onerror="this.src='https://placehold.co/600x400?text=AI+Analysis'">
+                    <div class="service-body">
+                        <h3>AI Predictive Analytics</h3>
+                        <p>Utilizing Random Forest algorithms to predict liver disease probability with high precision.</p>
+                    </div>
+                </div>
+                <div class="service-card-lg">
+                    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=600&q=80" 
+                         class="service-img" alt="Telemedicine"
+                         onerror="this.src='https://placehold.co/600x400?text=Telemedicine'">
+                    <div class="service-body">
+                        <h3>Telemedicine Connect</h3>
+                        <p>Directly schedule virtual consultations with hepatologists if your screening results indicate risk.</p>
+                    </div>
+                </div>
+                <div class="service-card-lg">
+                    <img src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=600&q=80" 
+                         class="service-img" alt="Genetics"
+                         onerror="this.src='https://placehold.co/600x400?text=Genetics'">
+                    <div class="service-body">
+                        <h3>Genetic Risk Profiling</h3>
+                        <p>Advanced feature to analyze hereditary factors contributing to liver conditions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= ABOUT PAGE ================= -->
+        <div class="page-section {{ 'active-section' if page == 'about' else '' }}">
+             <div class="about-split">
+                <div class="about-text">
+                    <h2 style="font-size: 2.5rem; margin-bottom: 20px;">Democratizing Advanced <br>Medical Diagnostics.</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 20px;">HealthAI was born from a simple realization: early detection is the most powerful cure.</p>
+                </div>
+                <div class="about-img">
+                    <img src="https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&w=800&q=80" 
+                         alt="Team" onerror="this.style.display='none'">
+                </div>
+            </div>
+            <div style="text-align: center;"><h2>Meet Our Medical Board</h2></div>
+            <div class="team-grid">
+                <!-- Using avatars or placeholders -->
+                <div class="team-card">
+                    <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=300&q=80" class="team-avatar" onerror="this.src='https://placehold.co/150'">
+                    <h4>Dr. Sarah Chen</h4><span>Chief Hepatologist</span>
+                </div>
+                <div class="team-card">
+                    <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=300&q=80" class="team-avatar" onerror="this.src='https://placehold.co/150'">
+                    <h4>Dr. James Wilson</h4><span>Data Scientist</span>
+                </div>
+                <div class="team-card">
+                    <img src="https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=300&q=80" class="team-avatar" onerror="this.src='https://placehold.co/150'">
+                    <h4>Dr. Anita Patel</h4><span>Clinical Researcher</span>
+                </div>
+                <div class="team-card">
+                    <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=300&q=80" class="team-avatar" onerror="this.src='https://placehold.co/150'">
+                    <h4>Dr. Robert Fox</h4><span>AI Ethics Lead</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= CONTACT PAGE ================= -->
+        <div class="page-section {{ 'active-section' if page == 'contact' else '' }}">
+            <div style="text-align: center; margin-bottom: 50px;"><h2>Contact Support</h2></div>
+            <div class="contact-layout">
+                <div class="contact-info">
+                    <h3>Contact Info</h3>
+                    <div class="contact-details-item"><strong>+1 (800) 123-4567</strong></div>
+                    <div class="contact-details-item"><strong>support@healthai.com</strong></div>
+                    <div class="contact-details-item"><strong>123 Medical Plaza, San Francisco, CA</strong></div>
+                </div>
+                <div class="contact-form-area">
+                    <form>
+                        <div class="input-group"><label>Name</label><input type="text" placeholder="John Doe"></div>
+                        <div class="input-group"><label>Message</label><input type="text" placeholder="Your query..."></div>
+                        <button class="cta-btn">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2025 HealthAI Diagnostics. All rights reserved.</p>
+    </footer>
+
+    <!-- Added Script for Better UX -->
+    <script>
+        function showLoading() {
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = 'Analyzing Data...';
+            btn.style.opacity = '0.7';
+        }
+    </script>
+
+</body>
+</html>
